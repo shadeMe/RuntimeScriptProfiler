@@ -53,6 +53,9 @@ bool IsRUDEPresent()
 	return false;
 }
 
+static bool			s_MainLoopExecuting = false;
+static UInt32		s_ExecutedScripts = 0;
+
 void __stdcall DoScriptRunnerExecuteTimeElapsedHook(Script* ExecutingScript, float ElapsedTime)
 {
 	static bool INIValueCached = false;
@@ -81,8 +84,11 @@ void __stdcall DoScriptRunnerExecuteTimeElapsedHook(Script* ExecutingScript, flo
 		return;
 	else if (FilterFormID && ExecutingScript->refID != FilterFormID)
 		return;
+	else if (!s_MainLoopExecuting)
+		return;
 
-	_MESSAGE("Script '%08X' executed in %.10f milliseconds", ExecutingScript->refID, ElapsedTime);
+	_MESSAGE("%08X\t\t\t\t\t\t\t\t\t%.10f ms", ExecutingScript->refID, ElapsedTime * 1000);
+	s_ExecutedScripts++;
 }
 
 _BeginHookHdlrFn(ScriptRunnerExecuteTimeElapsed)
@@ -104,20 +110,31 @@ _BeginHookHdlrFn(ScriptRunnerExecuteTimeElapsed)
 
 void __stdcall DoTESExecuteScriptsMainLoopHook(bool State)
 {
-	static DWORD TickCount = 0;
+	static LARGE_INTEGER BufferA = {0}, BufferB = {0};
+	static LARGE_INTEGER FreqBuffer = {0};
 
 	if (State)
 	{
-		_MESSAGE("\nBegin Frame:");
-		gLog.Indent();
-		TickCount = GetTickCount();
+		if (FreqBuffer.HighPart == 0)
+			QueryPerformanceFrequency(&FreqBuffer);
+
+		QueryPerformanceCounter(&BufferA);
+		s_MainLoopExecuting = true;
 	}
 	else
 	{
-		gLog.SetAutoFlush(true);
-		gLog.Outdent();
-		_MESSAGE("End Frame: Elapsed Time = %d milliseconds", GetTickCount() - TickCount);
-		gLog.SetAutoFlush(false);
+		QueryPerformanceCounter(&BufferB);
+		long double ElapsedTime = ((BufferB.QuadPart - BufferA.QuadPart ) * 1000.0 / FreqBuffer.QuadPart);
+
+		if (s_ExecutedScripts)
+		{
+			gLog.SetAutoFlush(true);
+			_MESSAGE("================================================================================== %.010f ms", ElapsedTime);
+			gLog.SetAutoFlush(false);
+		}
+
+		s_MainLoopExecuting = false;
+		s_ExecutedScripts = 0;
 	}
 }
 

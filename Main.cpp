@@ -57,6 +57,8 @@ bool OBSEPlugin_Load(const OBSEInterface * obse)
 
 	gLog.Outdent();
 	_MESSAGE("RuntimeScriptProfiler Initialized!\n\n");
+
+	_MESSAGE("Script\t\t\t\t\t\t\t\t\t\tElapsed Time\n");
 	return true;
 }
 };
