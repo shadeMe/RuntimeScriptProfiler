@@ -1,0 +1,6 @@
+To-Do
+======
+> Add INI option to allow profiling outside the main loop
+> Fetch script editorIDs from REID
+> indicating for each frame how much time has elapsed since starting Oblivion: this would permit graphing a script's resource consumption over time, among other things.
+> provide some way of comparing how much time is spent in scripts compared to the rest of the engine, so we can have an idea of whether scripts are slowing the whole thing down
